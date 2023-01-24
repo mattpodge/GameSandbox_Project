@@ -2,17 +2,28 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(CharacterController2D))]
 public class PlayerInput : MonoBehaviour
 {
-    // Start is called before the first frame update
+
+    float playerSpeed = 6f;
+    float playerGravity = -10f;
+    Vector2 velocity;
+
+    CharacterController2D controller;
+
     void Start()
     {
-        
+        controller = GetComponent<CharacterController2D>();
     }
 
-    // Update is called once per frame
     void Update()
     {
-        
-    }
+        Vector2 rawInput = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
+
+        velocity.x = rawInput.x * playerSpeed;
+        velocity.y += playerGravity * Time.deltaTime;
+
+        controller.Move(velocity * Time.deltaTime);
+	}
 }
