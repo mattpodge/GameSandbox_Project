@@ -28,11 +28,11 @@ public class PlayerInput : MonoBehaviour
         controller.Move(velocity * Time.deltaTime);
 	}
 
-    public void OnMovement(InputAction.CallbackContext context) {
-        rawInput = new Vector2(context.ReadValue<Vector2>().x, context.ReadValue<Vector2>().y);
+    public void OnMovement(InputValue input) {
+        rawInput = new Vector2(input.Get<Vector2>().x, input.Get<Vector2>().y);
 	}
 
-    public void OnJump(InputAction.CallbackContext context) {
+    public void OnJump(InputValue input) {
         Debug.Log("Jump!");
     }
 
