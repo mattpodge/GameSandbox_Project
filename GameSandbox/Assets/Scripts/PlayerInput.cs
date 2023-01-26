@@ -7,14 +7,7 @@ using UnityEngine.InputSystem;
 public class PlayerInput : MonoBehaviour
 {
 
-    float playerSpeed = 6f;
-    float playerGravity = -10f;
-    Vector2 velocity;
     Vector2 rawInput;
-
-	float velocitySmoothing;
-    float accTime = 0.2f;
-
     CharacterController2D controller;
 
     void Start()
@@ -24,8 +17,7 @@ public class PlayerInput : MonoBehaviour
 
     void FixedUpdate()
     {
-        CalcVelocity();
-        controller.Move(velocity * Time.deltaTime);
+        controller.Move(rawInput);
 	}
 
     public void OnMovement(InputValue input) {
@@ -33,12 +25,6 @@ public class PlayerInput : MonoBehaviour
 	}
 
     public void OnJump(InputValue input) {
-        Debug.Log("Jump!");
+        controller.Jump();
     }
-
-    void CalcVelocity() {
-		float targetVelocity = rawInput.x * playerSpeed;
-		velocity.x = Mathf.SmoothDamp(velocity.x, targetVelocity, ref velocitySmoothing, accTime);
-		velocity.y += playerGravity * Time.deltaTime;
-	}
 }

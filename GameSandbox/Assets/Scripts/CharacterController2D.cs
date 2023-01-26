@@ -5,13 +5,37 @@ using UnityEngine;
 public class CharacterController2D : MonoBehaviour
 {
 
-    const float skinWidth = 0.015f;
+	Vector2 playerInput;
 
-    const float raySpacing = 0.25f;
-    int horzRayCount;
-    int vertRayCount;
-    float horzRaySpacing;
-    float vertRaySpacing;
+	// Collisions
+	const float skinWidth = 0.015f;
+	const float raySpacing = 0.25f;
+
+	int horzRayCount;
+	int vertRayCount;
+	float horzRaySpacing;
+	float vertRaySpacing;
+
+	// Forces
+	float gravity;
+
+	// Movement
+    float walkSpeed = 4f;
+    float runSpeed = 6f;
+
+    Vector2 velocity;
+    float velocitySmoothing;
+
+    float accTimeGrounded = 0.2f;
+    float accTimeAirborne = 0.4f;
+
+    // Jumping
+    float maxJumpHeight = 2f;
+    float minJumpHeight = 1f;
+    float timeToJumpApex = 0.3f;
+
+	float maxJumpVel;
+	float minJumpVel;
 
     public LayerMask collisionMask;
 
@@ -21,12 +45,21 @@ public class CharacterController2D : MonoBehaviour
 	void Start() {
         collider = GetComponent<BoxCollider2D>();
 		CalculateRaySpacing();
+
+		// Calculate forces
+		gravity = -(2 * maxJumpHeight) / Mathf.Pow(timeToJumpApex, 2);
+		maxJumpVel = Mathf.Abs(gravity) * timeToJumpApex;
+		minJumpVel = Mathf.Sqrt(2 * Mathf.Abs(gravity) * minJumpHeight);
 	}
 
-    public void Move(Vector2 movement) {
-        UpdateRaycastOrigins();
+	private void FixedUpdate() {
+	}
 
-        if(movement.x != 0) {
+	public void Move(Vector2 playerInput) {
+		Vector2 movement = CalcVelocity(playerInput) * Time.deltaTime;
+		UpdateRaycastOrigins();
+
+		if(movement.x != 0) {
             HorzCollisions(ref movement);
         }
 
@@ -37,8 +70,20 @@ public class CharacterController2D : MonoBehaviour
 		transform.Translate(movement);
     }
 
-    // Collision detection
-    void HorzCollisions(ref Vector2 movement) {
+    public void Jump() {
+		velocity.y = maxJumpVel;
+	}
+
+    Vector2 CalcVelocity(Vector2 playerInput) {
+		float targetVelocity = playerInput.x * walkSpeed;
+		velocity.x = Mathf.SmoothDamp(velocity.x, targetVelocity, ref velocitySmoothing, accTimeGrounded);
+		velocity.y += gravity * Time.deltaTime;
+
+        return new Vector2(velocity.x, velocity.y);
+	}
+
+	// Collision detection
+	void HorzCollisions(ref Vector2 movement) {
         float dirX = Mathf.Sign(movement.x);
         float rayLength = Mathf.Abs(movement.x) + skinWidth;
 
