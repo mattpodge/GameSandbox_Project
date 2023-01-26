@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Unity.VisualScripting;
 
 [RequireComponent(typeof(CharacterController2D))]
 public class PlayerInput : MonoBehaviour
@@ -20,11 +21,17 @@ public class PlayerInput : MonoBehaviour
         controller.Move(rawInput);
 	}
 
-    public void OnMovement(InputValue input) {
-        rawInput = new Vector2(input.Get<Vector2>().x, input.Get<Vector2>().y);
+    public void OnMovement(InputAction.CallbackContext input) {
+        rawInput = new Vector2(input.ReadValue<Vector2>().x, input.ReadValue<Vector2>().y);
 	}
 
-    public void OnJump(InputValue input) {
-        controller.Jump();
+    public void OnJump(InputAction.CallbackContext input) {
+        if(input.performed) {
+            controller.Jump();
+        }
+
+        if(input.canceled) {
+            controller.ShortJump();
+        }
     }
 }

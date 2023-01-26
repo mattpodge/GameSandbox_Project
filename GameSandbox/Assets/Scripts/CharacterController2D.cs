@@ -74,6 +74,10 @@ public class CharacterController2D : MonoBehaviour
 		velocity.y = maxJumpVel;
 	}
 
+	public void ShortJump() {
+		Debug.Log("Short Jump");
+	}
+
     Vector2 CalcVelocity(Vector2 playerInput) {
 		float targetVelocity = playerInput.x * walkSpeed;
 		velocity.x = Mathf.SmoothDamp(velocity.x, targetVelocity, ref velocitySmoothing, accTimeGrounded);
