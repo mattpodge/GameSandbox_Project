@@ -5,9 +5,8 @@ using UnityEngine;
 public class CharacterController2D : MonoBehaviour
 {
 
-	Vector2 playerInput;
-
-	// Collisions
+	#region
+	[Header("Collision Detection")]
 	const float skinWidth = 0.015f;
 	const float raySpacing = 0.25f;
 
@@ -16,31 +15,64 @@ public class CharacterController2D : MonoBehaviour
 	float horzRaySpacing;
 	float vertRaySpacing;
 
-	// Forces
-	float gravity;
+	public LayerMask collisionMask;
+	#endregion
 
-	// Movement
-    float walkSpeed = 4f;
-    float runSpeed = 6f;
+	#region
+	[Header("Player Input")]
+	Vector2 playerInput;
+	bool playerRunning;
+	#endregion
+
+	#region
+	[Header("Forces")]
+	float gravity;
+	#endregion
+
+	#region
+	[Header("Movement")]
+	[SerializeField]
+	float walkSpeed = 4f;
+	[SerializeField]
+	float runSpeed = 6f;
 
     Vector2 velocity;
     float velocitySmoothing;
 
-    float accTimeGrounded = 0.2f;
-    float accTimeAirborne = 0.4f;
+	[SerializeField]
+	float accTimeGrounded = 0.2f;
+	[SerializeField]
+	float accTimeAirborne = 0.4f;
+	#endregion
 
-    // Jumping
-    float maxJumpHeight = 2f;
-    float minJumpHeight = 1f;
-    float timeToJumpApex = 0.3f;
+	#region
+	[Header("Jumping")]
+	[SerializeField]
+	float maxJumpHeight = 2f;
+	[SerializeField]
+	float minJumpHeight = 1f;
+	[SerializeField]
+	float timeToJumpApex = 0.3f;
 
 	float maxJumpVel;
 	float minJumpVel;
 
-    public LayerMask collisionMask;
+
+	// Coyote Time
+	[SerializeField]
+	float coyoteTime = 0.2f;
+	float coyoteTimeCounter;
+
+	// Jump Buffer
+	[SerializeField]
+	float jumpBuffer = 0.2f;
+	float jumpBufferCounter;
+	#endregion
+
 
     new BoxCollider2D collider;
     RayCastOrigins raycastOrigins;
+	CollisionInfo collisions;
 
 	void Start() {
         collider = GetComponent<BoxCollider2D>();
@@ -53,11 +85,28 @@ public class CharacterController2D : MonoBehaviour
 	}
 
 	private void FixedUpdate() {
+		Debug.Log(collisions.below);
+
+		if(collisions.below) {
+			coyoteTimeCounter = coyoteTime;
+		} else {
+			coyoteTimeCounter -= Time.deltaTime;
+		}
+
+		if(jumpBufferCounter > 0f) {
+			jumpBufferCounter -= Time.deltaTime;
+		}
+
+		if(coyoteTimeCounter > 0f && jumpBufferCounter > 0f) {
+			Jump();
+			jumpBufferCounter = 0f;
+		}
 	}
 
 	public void Move(Vector2 playerInput) {
 		Vector2 movement = CalcVelocity(playerInput) * Time.deltaTime;
 		UpdateRaycastOrigins();
+		collisions.Reset();
 
 		if(movement.x != 0) {
             HorzCollisions(ref movement);
@@ -70,17 +119,27 @@ public class CharacterController2D : MonoBehaviour
 		transform.Translate(movement);
     }
 
-    public void Jump() {
-		velocity.y = maxJumpVel;
+	public void Running(bool running) {
+		playerRunning = running;
 	}
 
-	public void ShortJump() {
-		Debug.Log("Short Jump");
+    public void Jump() {
+		if(coyoteTimeCounter > 0f) {
+			velocity.y = maxJumpVel;
+		}
+		jumpBufferCounter = jumpBuffer;
+	}
+
+	public void JumpRelease() {
+		if(velocity.y > minJumpVel) {
+			velocity.y = minJumpVel;
+		}
+		coyoteTimeCounter = 0f;
 	}
 
     Vector2 CalcVelocity(Vector2 playerInput) {
-		float targetVelocity = playerInput.x * walkSpeed;
-		velocity.x = Mathf.SmoothDamp(velocity.x, targetVelocity, ref velocitySmoothing, accTimeGrounded);
+		float targetVelocity = playerInput.x * (playerRunning ? runSpeed : walkSpeed);
+		velocity.x = Mathf.SmoothDamp(velocity.x, targetVelocity, ref velocitySmoothing, (collisions.below ? accTimeGrounded : accTimeAirborne));
 		velocity.y += gravity * Time.deltaTime;
 
         return new Vector2(velocity.x, velocity.y);
@@ -101,6 +160,9 @@ public class CharacterController2D : MonoBehaviour
             if(hit) {
                 movement.x = (hit.distance - skinWidth) * dirX;
                 rayLength = hit.distance;
+
+				collisions.left = dirX == -1;
+				collisions.right = dirX == 1;
             }
 		}
 
@@ -120,6 +182,9 @@ public class CharacterController2D : MonoBehaviour
 			if(hit) {
 				movement.y = (hit.distance - skinWidth) * dirY;
 				rayLength = hit.distance;
+
+				collisions.below = dirY == -1;
+				collisions.above = dirY == 1;
 			}
 
 		}
@@ -149,4 +214,14 @@ public class CharacterController2D : MonoBehaviour
         public Vector2 btmLeft, btmRight;
         public Vector2 topLeft, topRight;
     }
+
+	struct CollisionInfo {
+		public bool above, below;
+		public bool left, right;
+
+		public void Reset() {
+			above = below = false;
+			left = right = false;
+		}
+	}
 }

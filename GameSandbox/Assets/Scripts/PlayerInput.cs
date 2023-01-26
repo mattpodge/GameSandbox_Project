@@ -21,17 +21,21 @@ public class PlayerInput : MonoBehaviour
         controller.Move(rawInput);
 	}
 
-    public void OnMovement(InputAction.CallbackContext input) {
-        rawInput = new Vector2(input.ReadValue<Vector2>().x, input.ReadValue<Vector2>().y);
+    public void OnMovement(InputAction.CallbackContext context) {
+        rawInput = new Vector2(context.ReadValue<Vector2>().x, context.ReadValue<Vector2>().y);
 	}
 
-    public void OnJump(InputAction.CallbackContext input) {
-        if(input.performed) {
+    public void OnRun(InputAction.CallbackContext context) {
+        controller.Running(context.performed);
+    }
+
+    public void OnJump(InputAction.CallbackContext context) {
+        if(context.performed) {
             controller.Jump();
         }
 
-        if(input.canceled) {
-            controller.ShortJump();
+        if(context.canceled) {
+            controller.JumpRelease();
         }
     }
 }

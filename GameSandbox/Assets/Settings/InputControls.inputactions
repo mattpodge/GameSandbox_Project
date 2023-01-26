@@ -2,7 +2,7 @@
     "name": "InputControls",
     "maps": [
         {
-            "name": "Basic Movement",
+            "name": "Player Control",
             "id": "8b4f87ef-d8c8-48c8-af12-d08d831fa73e",
             "actions": [
                 {
@@ -20,7 +20,16 @@
                     "id": "6a64f917-2819-4a14-86f5-4e672d24e1cf",
                     "expectedControlType": "Button",
                     "processors": "",
-                    "interactions": "Press(behavior=2)",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Run",
+                    "type": "Button",
+                    "id": "175b9e98-9d20-4e5e-acb3-8177b79b28fc",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
                     "initialStateCheck": false
                 }
             ],
@@ -163,7 +172,7 @@
                     "path": "<Gamepad>/buttonSouth",
                     "interactions": "",
                     "processors": "",
-                    "groups": "",
+                    "groups": "Player Controls",
                     "action": "Jump",
                     "isComposite": false,
                     "isPartOfComposite": false
@@ -174,8 +183,30 @@
                     "path": "<Keyboard>/space",
                     "interactions": "",
                     "processors": "",
-                    "groups": "",
+                    "groups": "Player Controls",
                     "action": "Jump",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "051044d7-8e45-42dc-b1ea-f14a4bd1daae",
+                    "path": "<Keyboard>/shift",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Player Controls",
+                    "action": "Run",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "45bc8975-6f02-438d-a2b8-372f0ba77c86",
+                    "path": "<Gamepad>/buttonWest",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Player Controls",
+                    "action": "Run",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

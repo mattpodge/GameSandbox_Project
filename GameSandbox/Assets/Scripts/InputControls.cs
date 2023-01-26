@@ -24,7 +24,7 @@ public partial class @InputControls : IInputActionCollection2, IDisposable
     ""name"": ""InputControls"",
     ""maps"": [
         {
-            ""name"": ""Basic Movement"",
+            ""name"": ""Player Control"",
             ""id"": ""8b4f87ef-d8c8-48c8-af12-d08d831fa73e"",
             ""actions"": [
                 {
@@ -42,7 +42,16 @@ public partial class @InputControls : IInputActionCollection2, IDisposable
                     ""id"": ""6a64f917-2819-4a14-86f5-4e672d24e1cf"",
                     ""expectedControlType"": ""Button"",
                     ""processors"": """",
-                    ""interactions"": ""Press(behavior=2)"",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Run"",
+                    ""type"": ""Button"",
+                    ""id"": ""175b9e98-9d20-4e5e-acb3-8177b79b28fc"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
                     ""initialStateCheck"": false
                 }
             ],
@@ -185,7 +194,7 @@ public partial class @InputControls : IInputActionCollection2, IDisposable
                     ""path"": ""<Gamepad>/buttonSouth"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": """",
+                    ""groups"": ""Player Controls"",
                     ""action"": ""Jump"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
@@ -196,8 +205,30 @@ public partial class @InputControls : IInputActionCollection2, IDisposable
                     ""path"": ""<Keyboard>/space"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": """",
+                    ""groups"": ""Player Controls"",
                     ""action"": ""Jump"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""051044d7-8e45-42dc-b1ea-f14a4bd1daae"",
+                    ""path"": ""<Keyboard>/shift"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Player Controls"",
+                    ""action"": ""Run"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""45bc8975-6f02-438d-a2b8-372f0ba77c86"",
+                    ""path"": ""<Gamepad>/buttonWest"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Player Controls"",
+                    ""action"": ""Run"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -223,10 +254,11 @@ public partial class @InputControls : IInputActionCollection2, IDisposable
         }
     ]
 }");
-        // Basic Movement
-        m_BasicMovement = asset.FindActionMap("Basic Movement", throwIfNotFound: true);
-        m_BasicMovement_Movement = m_BasicMovement.FindAction("Movement", throwIfNotFound: true);
-        m_BasicMovement_Jump = m_BasicMovement.FindAction("Jump", throwIfNotFound: true);
+        // Player Control
+        m_PlayerControl = asset.FindActionMap("Player Control", throwIfNotFound: true);
+        m_PlayerControl_Movement = m_PlayerControl.FindAction("Movement", throwIfNotFound: true);
+        m_PlayerControl_Jump = m_PlayerControl.FindAction("Jump", throwIfNotFound: true);
+        m_PlayerControl_Run = m_PlayerControl.FindAction("Run", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -283,34 +315,39 @@ public partial class @InputControls : IInputActionCollection2, IDisposable
         return asset.FindBinding(bindingMask, out action);
     }
 
-    // Basic Movement
-    private readonly InputActionMap m_BasicMovement;
-    private IBasicMovementActions m_BasicMovementActionsCallbackInterface;
-    private readonly InputAction m_BasicMovement_Movement;
-    private readonly InputAction m_BasicMovement_Jump;
-    public struct BasicMovementActions
+    // Player Control
+    private readonly InputActionMap m_PlayerControl;
+    private IPlayerControlActions m_PlayerControlActionsCallbackInterface;
+    private readonly InputAction m_PlayerControl_Movement;
+    private readonly InputAction m_PlayerControl_Jump;
+    private readonly InputAction m_PlayerControl_Run;
+    public struct PlayerControlActions
     {
         private @InputControls m_Wrapper;
-        public BasicMovementActions(@InputControls wrapper) { m_Wrapper = wrapper; }
-        public InputAction @Movement => m_Wrapper.m_BasicMovement_Movement;
-        public InputAction @Jump => m_Wrapper.m_BasicMovement_Jump;
-        public InputActionMap Get() { return m_Wrapper.m_BasicMovement; }
+        public PlayerControlActions(@InputControls wrapper) { m_Wrapper = wrapper; }
+        public InputAction @Movement => m_Wrapper.m_PlayerControl_Movement;
+        public InputAction @Jump => m_Wrapper.m_PlayerControl_Jump;
+        public InputAction @Run => m_Wrapper.m_PlayerControl_Run;
+        public InputActionMap Get() { return m_Wrapper.m_PlayerControl; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
         public bool enabled => Get().enabled;
-        public static implicit operator InputActionMap(BasicMovementActions set) { return set.Get(); }
-        public void SetCallbacks(IBasicMovementActions instance)
+        public static implicit operator InputActionMap(PlayerControlActions set) { return set.Get(); }
+        public void SetCallbacks(IPlayerControlActions instance)
         {
-            if (m_Wrapper.m_BasicMovementActionsCallbackInterface != null)
+            if (m_Wrapper.m_PlayerControlActionsCallbackInterface != null)
             {
-                @Movement.started -= m_Wrapper.m_BasicMovementActionsCallbackInterface.OnMovement;
-                @Movement.performed -= m_Wrapper.m_BasicMovementActionsCallbackInterface.OnMovement;
-                @Movement.canceled -= m_Wrapper.m_BasicMovementActionsCallbackInterface.OnMovement;
-                @Jump.started -= m_Wrapper.m_BasicMovementActionsCallbackInterface.OnJump;
-                @Jump.performed -= m_Wrapper.m_BasicMovementActionsCallbackInterface.OnJump;
-                @Jump.canceled -= m_Wrapper.m_BasicMovementActionsCallbackInterface.OnJump;
+                @Movement.started -= m_Wrapper.m_PlayerControlActionsCallbackInterface.OnMovement;
+                @Movement.performed -= m_Wrapper.m_PlayerControlActionsCallbackInterface.OnMovement;
+                @Movement.canceled -= m_Wrapper.m_PlayerControlActionsCallbackInterface.OnMovement;
+                @Jump.started -= m_Wrapper.m_PlayerControlActionsCallbackInterface.OnJump;
+                @Jump.performed -= m_Wrapper.m_PlayerControlActionsCallbackInterface.OnJump;
+                @Jump.canceled -= m_Wrapper.m_PlayerControlActionsCallbackInterface.OnJump;
+                @Run.started -= m_Wrapper.m_PlayerControlActionsCallbackInterface.OnRun;
+                @Run.performed -= m_Wrapper.m_PlayerControlActionsCallbackInterface.OnRun;
+                @Run.canceled -= m_Wrapper.m_PlayerControlActionsCallbackInterface.OnRun;
             }
-            m_Wrapper.m_BasicMovementActionsCallbackInterface = instance;
+            m_Wrapper.m_PlayerControlActionsCallbackInterface = instance;
             if (instance != null)
             {
                 @Movement.started += instance.OnMovement;
@@ -319,10 +356,13 @@ public partial class @InputControls : IInputActionCollection2, IDisposable
                 @Jump.started += instance.OnJump;
                 @Jump.performed += instance.OnJump;
                 @Jump.canceled += instance.OnJump;
+                @Run.started += instance.OnRun;
+                @Run.performed += instance.OnRun;
+                @Run.canceled += instance.OnRun;
             }
         }
     }
-    public BasicMovementActions @BasicMovement => new BasicMovementActions(this);
+    public PlayerControlActions @PlayerControl => new PlayerControlActions(this);
     private int m_PlayerControlsSchemeIndex = -1;
     public InputControlScheme PlayerControlsScheme
     {
@@ -332,9 +372,10 @@ public partial class @InputControls : IInputActionCollection2, IDisposable
             return asset.controlSchemes[m_PlayerControlsSchemeIndex];
         }
     }
-    public interface IBasicMovementActions
+    public interface IPlayerControlActions
     {
         void OnMovement(InputAction.CallbackContext context);
         void OnJump(InputAction.CallbackContext context);
+        void OnRun(InputAction.CallbackContext context);
     }
 }
