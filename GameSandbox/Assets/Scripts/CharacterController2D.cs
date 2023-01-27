@@ -21,7 +21,6 @@ public class CharacterController2D : MonoBehaviour
 	#region
 	[Header("Player Input")]
 	Vector2 playerInput;
-	bool playerRunning;
 	#endregion
 
 	#region
@@ -53,6 +52,8 @@ public class CharacterController2D : MonoBehaviour
 	float minJumpHeight = 1f;
 	[SerializeField]
 	float timeToJumpApex = 0.3f;
+	[SerializeField]
+	float fallMultiplier = 2.5f;
 
 	float maxJumpVel;
 	float minJumpVel;
@@ -73,6 +74,7 @@ public class CharacterController2D : MonoBehaviour
     new BoxCollider2D collider;
     RayCastOrigins raycastOrigins;
 	CollisionInfo collisions;
+	CharacterState state;
 
 	void Start() {
         collider = GetComponent<BoxCollider2D>();
@@ -85,22 +87,25 @@ public class CharacterController2D : MonoBehaviour
 	}
 
 	private void FixedUpdate() {
-		Debug.Log(collisions.below);
-
+		// Coyote time behaviour
 		if(collisions.below) {
 			coyoteTimeCounter = coyoteTime;
+			state.isJumping = false;
 		} else {
 			coyoteTimeCounter -= Time.deltaTime;
 		}
 
+		// Jump buffer behaviour
 		if(jumpBufferCounter > 0f) {
 			jumpBufferCounter -= Time.deltaTime;
 		}
-
 		if(coyoteTimeCounter > 0f && jumpBufferCounter > 0f) {
 			Jump();
 			jumpBufferCounter = 0f;
 		}
+
+		state.isFalling = (velocity.y < -0.5f && state.isJumping ? true : false);
+
 	}
 
 	public void Move(Vector2 playerInput) {
@@ -120,12 +125,13 @@ public class CharacterController2D : MonoBehaviour
     }
 
 	public void Running(bool running) {
-		playerRunning = running;
+		state.isRunning = running;
 	}
 
     public void Jump() {
 		if(coyoteTimeCounter > 0f) {
 			velocity.y = maxJumpVel;
+			state.isJumping = true;
 		}
 		jumpBufferCounter = jumpBuffer;
 	}
@@ -138,9 +144,9 @@ public class CharacterController2D : MonoBehaviour
 	}
 
     Vector2 CalcVelocity(Vector2 playerInput) {
-		float targetVelocity = playerInput.x * (playerRunning ? runSpeed : walkSpeed);
+		float targetVelocity = playerInput.x * (state.isRunning ? runSpeed : walkSpeed);
 		velocity.x = Mathf.SmoothDamp(velocity.x, targetVelocity, ref velocitySmoothing, (collisions.below ? accTimeGrounded : accTimeAirborne));
-		velocity.y += gravity * Time.deltaTime;
+		velocity.y += gravity * (state.isFalling ? fallMultiplier : 1f) * Time.deltaTime;
 
         return new Vector2(velocity.x, velocity.y);
 	}
@@ -223,5 +229,11 @@ public class CharacterController2D : MonoBehaviour
 			above = below = false;
 			left = right = false;
 		}
+	}
+
+	struct CharacterState {
+		public bool isJumping;
+		public bool isRunning;
+		public bool isFalling;
 	}
 }
