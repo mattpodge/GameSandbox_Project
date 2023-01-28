@@ -6,7 +6,7 @@ using Unity.VisualScripting;
 using UnityEngine.Windows;
 
 [RequireComponent(typeof(CharacterController2D))]
-public class InputController : MonoBehaviour
+public class PlayerController : MonoBehaviour
 {
 
 	#region
