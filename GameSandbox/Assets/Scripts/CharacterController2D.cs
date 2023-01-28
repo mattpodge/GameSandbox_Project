@@ -18,98 +18,20 @@ public class CharacterController2D : MonoBehaviour
 	public LayerMask collisionMask;
 	#endregion
 
-	#region
-	[Header("Player Input")]
-	Vector2 playerInput;
-	#endregion
-
-	#region
-	[Header("Forces")]
-	float gravity;
-	#endregion
-
-	#region
-	[Header("Movement")]
-	[SerializeField]
-	float walkSpeed = 4f;
-	[SerializeField]
-	float runSpeed = 6f;
-
-    Vector2 velocity;
-    float velocitySmoothing;
-
-	[SerializeField]
-	float accTimeGrounded = 0.2f;
-	[SerializeField]
-	float accTimeAirborne = 0.4f;
-	#endregion
-
-	#region
-	[Header("Jumping")]
-	[SerializeField]
-	float maxJumpHeight = 2f;
-	[SerializeField]
-	float minJumpHeight = 1f;
-	[SerializeField]
-	float timeToJumpApex = 0.3f;
-	[SerializeField]
-	float fallMultiplier = 2.5f;
-
-	float maxJumpVel;
-	float minJumpVel;
-
-
-	// Coyote Time
-	[SerializeField]
-	float coyoteTime = 0.2f;
-	float coyoteTimeCounter;
-
-	// Jump Buffer
-	[SerializeField]
-	float jumpBuffer = 0.2f;
-	float jumpBufferCounter;
-	#endregion
-
-
     new BoxCollider2D collider;
     RayCastOrigins raycastOrigins;
-	CollisionInfo collisions;
-	CharacterState state;
+	public CollisionInfo collisions;
+	public CharacterState state;
+
+	void Awake() {
+        collider = GetComponent<BoxCollider2D>();
+	}
 
 	void Start() {
-        collider = GetComponent<BoxCollider2D>();
 		CalculateRaySpacing();
-
-		// Calculate forces
-		gravity = -(2 * maxJumpHeight) / Mathf.Pow(timeToJumpApex, 2);
-		maxJumpVel = Mathf.Abs(gravity) * timeToJumpApex;
-		minJumpVel = Mathf.Sqrt(2 * Mathf.Abs(gravity) * minJumpHeight);
 	}
 
-	private void FixedUpdate() {
-		// Coyote time behaviour
-		if(collisions.below) {
-			coyoteTimeCounter = coyoteTime;
-			state.isJumping = false;
-		} else {
-			coyoteTimeCounter -= Time.deltaTime;
-		}
-
-		// Jump buffer behaviour
-		if(jumpBufferCounter > 0f) {
-			jumpBufferCounter -= Time.deltaTime;
-		}
-		if(coyoteTimeCounter > 0f && jumpBufferCounter > 0f) {
-			Jump();
-			jumpBufferCounter = 0f;
-		}
-
-		state.isFalling = (velocity.y < -0.5f && state.isJumping ? true : false);
-
-	}
-
-	public void Move(Vector2 playerInput) {
-		Vector2 movement = CalcVelocity(playerInput) * Time.deltaTime;
+	public void Move(Vector2 movement) {
 		UpdateRaycastOrigins();
 		collisions.Reset();
 
@@ -124,33 +46,6 @@ public class CharacterController2D : MonoBehaviour
 		transform.Translate(movement);
     }
 
-	public void Running(bool running) {
-		state.isRunning = running;
-	}
-
-    public void Jump() {
-		if(coyoteTimeCounter > 0f) {
-			velocity.y = maxJumpVel;
-			state.isJumping = true;
-		}
-		jumpBufferCounter = jumpBuffer;
-	}
-
-	public void JumpRelease() {
-		if(velocity.y > minJumpVel) {
-			velocity.y = minJumpVel;
-		}
-		coyoteTimeCounter = 0f;
-	}
-
-    Vector2 CalcVelocity(Vector2 playerInput) {
-		float targetVelocity = playerInput.x * (state.isRunning ? runSpeed : walkSpeed);
-		velocity.x = Mathf.SmoothDamp(velocity.x, targetVelocity, ref velocitySmoothing, (collisions.below ? accTimeGrounded : accTimeAirborne));
-		velocity.y += gravity * (state.isFalling ? fallMultiplier : 1f) * Time.deltaTime;
-
-        return new Vector2(velocity.x, velocity.y);
-	}
-
 	// Collision detection
 	void HorzCollisions(ref Vector2 movement) {
         float dirX = Mathf.Sign(movement.x);
@@ -164,6 +59,21 @@ public class CharacterController2D : MonoBehaviour
 			Debug.DrawRay(rayOrigin , Vector2.right * dirX, Color.yellow);
 
             if(hit) {
+
+				float slopeAngle = Vector2.Angle(hit.normal, Vector2.up);
+
+				if(i == 0) {
+					float distToMove = Mathf.Abs(movement.x);
+					float distToClimb = Mathf.Sin(slopeAngle * Mathf.Deg2Rad) * distToMove;
+
+					if(movement.y <= distToClimb) {
+						movement.y = distToClimb;
+						movement.x = Mathf.Cos(slopeAngle * Mathf.Deg2Rad) * distToMove * Mathf.Sign(movement.x);
+						collisions.below = true;
+						state.isClimbingSlope = true;
+					}
+				}
+
                 movement.x = (hit.distance - skinWidth) * dirX;
                 rayLength = hit.distance;
 
@@ -200,6 +110,7 @@ public class CharacterController2D : MonoBehaviour
 	void UpdateRaycastOrigins() {
 		Bounds bounds = collider.bounds;
 		bounds.Expand(skinWidth * -2);
+
         raycastOrigins.btmLeft = new Vector2(bounds.min.x, bounds.min.y);
         raycastOrigins.btmRight = new Vector2(bounds.max.x, bounds.min.y);
         raycastOrigins.topLeft = new Vector2(bounds.min.x, bounds.max.y);
@@ -209,6 +120,8 @@ public class CharacterController2D : MonoBehaviour
 	void CalculateRaySpacing() {
 		Bounds bounds = collider.bounds;
 		bounds.Expand(skinWidth * -2);
+
+
 		horzRayCount = Mathf.RoundToInt(bounds.size.y / raySpacing);
 		vertRayCount = Mathf.RoundToInt(bounds.size.x / raySpacing);
 
@@ -221,7 +134,7 @@ public class CharacterController2D : MonoBehaviour
         public Vector2 topLeft, topRight;
     }
 
-	struct CollisionInfo {
+	public struct CollisionInfo {
 		public bool above, below;
 		public bool left, right;
 
@@ -231,9 +144,13 @@ public class CharacterController2D : MonoBehaviour
 		}
 	}
 
-	struct CharacterState {
+	// Keep track of states
+	public struct CharacterState {
+		public bool isGrounded;
 		public bool isJumping;
 		public bool isRunning;
 		public bool isFalling;
+		public bool isClimbingSlope;
+		public bool isDescendingSlope;
 	}
 }
