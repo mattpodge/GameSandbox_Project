@@ -1,4 +1,6 @@
+using System;
 using System.Collections;
+using System.Runtime.InteropServices.WindowsRuntime;
 using UnityEngine;
 
 [RequireComponent (typeof(BoxCollider2D))]
@@ -18,6 +20,9 @@ public class CharacterController2D : MonoBehaviour
 	public LayerMask collisionMask;
 	#endregion
 
+	[SerializeField]
+	float maxSlopeAngle = 60.0f;
+
     new BoxCollider2D collider;
     RayCastOrigins raycastOrigins;
 	public CollisionInfo collisions;
@@ -29,61 +34,77 @@ public class CharacterController2D : MonoBehaviour
 
 	void Start() {
 		CalculateRaySpacing();
+		state.dirFacing = 1;
 	}
 
 	public void Move(Vector2 movement) {
 		UpdateRaycastOrigins();
 		collisions.Reset();
+		state.Reset();
+
+		if(movement.y < 0) {
+			DescendSlope(ref movement);
+		}
 
 		if(movement.x != 0) {
-            HorzCollisions(ref movement);
-        }
+			state.dirFacing = (int)Mathf.Sign(movement.x);
+		}
+
+        HorzCollisions(ref movement);
 
         if(movement.y != 0) {
             VertCollisions(ref movement);
 		}
 
+
 		transform.Translate(movement);
     }
 
-	// Collision detection
+	// Detect objects left/right of our character
 	void HorzCollisions(ref Vector2 movement) {
-        float dirX = Mathf.Sign(movement.x);
+        float dirX = state.dirFacing;
         float rayLength = Mathf.Abs(movement.x) + skinWidth;
+
+		if(Mathf.Abs(movement.x) < skinWidth) {
+			rayLength = 2 * skinWidth;
+		}
 
 		for(int i = 0; i < horzRayCount; i++) {
             Vector2 rayOrigin = (dirX == -1) ? raycastOrigins.btmLeft : raycastOrigins.btmRight;
             rayOrigin += Vector2.up * (horzRaySpacing * i);
             RaycastHit2D hit = Physics2D.Raycast(rayOrigin, Vector2.right * dirX, rayLength, collisionMask);
 
-			Debug.DrawRay(rayOrigin , Vector2.right * dirX, Color.yellow);
+			Debug.DrawRay(rayOrigin , Vector2.right * dirX * rayLength, Color.yellow);
 
             if(hit) {
 
 				float slopeAngle = Vector2.Angle(hit.normal, Vector2.up);
 
-				if(i == 0) {
-					float distToMove = Mathf.Abs(movement.x);
-					float distToClimb = Mathf.Sin(slopeAngle * Mathf.Deg2Rad) * distToMove;
-
-					if(movement.y <= distToClimb) {
-						movement.y = distToClimb;
-						movement.x = Mathf.Cos(slopeAngle * Mathf.Deg2Rad) * distToMove * Mathf.Sign(movement.x);
-						collisions.below = true;
-						state.isClimbingSlope = true;
-					}
+				// If bottom right/left ray hits a slope...
+				if(i == 0 && slopeAngle <= maxSlopeAngle) {
+					ClimbSlope(ref movement, slopeAngle);
 				}
 
-                movement.x = (hit.distance - skinWidth) * dirX;
-                rayLength = hit.distance;
+				// When we're on flat ground
+				if(!state.isClimbingSlope || slopeAngle > maxSlopeAngle) {
+					movement.x = (hit.distance - skinWidth) * dirX;
+					rayLength = hit.distance;
 
-				collisions.left = dirX == -1;
-				collisions.right = dirX == 1;
+					// Collisions in front of us while climbing
+					if(state.isClimbingSlope) {
+						movement.y = Mathf.Tan(collisions.slopeAngle * Mathf.Deg2Rad) * Mathf.Abs(movement.x);
+					}
+
+					collisions.left = dirX == -1;
+					collisions.right = dirX == 1;
+				}
+
             }
 		}
 
 	}
 
+	// Detect objects above/below our character
     void VertCollisions(ref Vector2 movement) {
         float dirY = Mathf.Sign(movement.y);
         float rayLength = Mathf.Abs(movement.y) + skinWidth;
@@ -93,16 +114,64 @@ public class CharacterController2D : MonoBehaviour
             rayOrigin += Vector2.right * (vertRaySpacing * i + movement.x);
 			RaycastHit2D hit = Physics2D.Raycast(rayOrigin, Vector2.up * dirY, rayLength, collisionMask);
 
-			Debug.DrawRay(rayOrigin , Vector2.up * dirY, Color.red);
+			Debug.DrawRay(rayOrigin , Vector2.up * dirY * rayLength, Color.red);
 
 			if(hit) {
 				movement.y = (hit.distance - skinWidth) * dirY;
 				rayLength = hit.distance;
 
+				// Collisions above us while climbing
+				if(state.isClimbingSlope) {
+					movement.x = movement.y / Mathf.Tan(collisions.slopeAngle * Mathf.Deg2Rad) * Mathf.Sign(movement.x);
+				}
+
 				collisions.below = dirY == -1;
 				collisions.above = dirY == 1;
 			}
 
+		}
+	}
+
+	// Climbing slope logic
+	void ClimbSlope(ref Vector2 movement, float slopeAngle) {
+		float distToMove = Mathf.Abs(movement.x);
+		float distToClimb = Mathf.Sin(slopeAngle * Mathf.Deg2Rad) * distToMove;
+
+		if(movement.y <= distToClimb) {
+			movement.y = distToClimb;
+			movement.x = Mathf.Cos(slopeAngle * Mathf.Deg2Rad) * distToMove * Mathf.Sign(movement.x);
+
+			collisions.below = true;
+			collisions.slopeAngle = slopeAngle;
+			state.isClimbingSlope = true;
+		}
+	}
+
+	// Descending slope logic
+	void DescendSlope(ref Vector2 movement) {
+		float dirX = Mathf.Sign(movement.x);
+		Vector2 rayOrigin = (dirX == -1) ? raycastOrigins.btmRight : raycastOrigins.btmLeft;
+		RaycastHit2D hit = Physics2D.Raycast(rayOrigin, -Vector2.up, Mathf.Infinity, collisionMask);
+
+		if(hit) {
+			float slopeAngle = Vector2.Angle(hit.normal, Vector2.up);
+
+			if(slopeAngle != 0 && slopeAngle <= maxSlopeAngle) {
+				// If the normal is facing the same direction as our destination
+				if(Mathf.Sign(hit.normal.x) == dirX) {
+					// Check to see if we're close enough to the slope
+					if(hit.distance - skinWidth <= Mathf.Tan(slopeAngle * Mathf.Deg2Rad) * Mathf.Abs(movement.x)) {
+						float distToMove = Mathf.Abs(movement.x);
+						float distToDescend = Mathf.Sin(slopeAngle * Mathf.Deg2Rad) * distToMove;
+						movement.x = Mathf.Cos(slopeAngle * Mathf.Deg2Rad) * distToMove * Mathf.Sign(movement.x);
+						movement.y -= distToDescend;
+
+						collisions.below = true;
+						collisions.slopeAngle = slopeAngle;
+						state.isDescendingSlope = true;
+					}
+				}
+			}
 		}
 	}
 
@@ -138,9 +207,14 @@ public class CharacterController2D : MonoBehaviour
 		public bool above, below;
 		public bool left, right;
 
+		public float slopeAngle, slopeAnglePrev;
+
 		public void Reset() {
 			above = below = false;
 			left = right = false;
+
+			slopeAnglePrev = slopeAngle;
+			slopeAngle = 0;
 		}
 	}
 
@@ -152,5 +226,12 @@ public class CharacterController2D : MonoBehaviour
 		public bool isFalling;
 		public bool isClimbingSlope;
 		public bool isDescendingSlope;
+
+		public int dirFacing;
+
+		public void Reset() {
+			isClimbingSlope = false;
+			isDescendingSlope = false;
+		}
 	}
 }

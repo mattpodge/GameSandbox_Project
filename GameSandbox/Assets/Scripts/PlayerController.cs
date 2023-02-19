@@ -57,6 +57,15 @@ public class PlayerController : MonoBehaviour
 	float jumpBufferCounter;
 	#endregion
 
+	#region
+	[Header("Wall Jump")]
+	[SerializeField]
+	bool wallJumpEnabled = true;
+	bool wallSliding;
+	float maxWallSlideVelocity = 4f;
+	#endregion
+
+
 	// Movement input
 	Vector2 moveInput;
 
@@ -74,8 +83,11 @@ public class PlayerController : MonoBehaviour
 	}
 
 	void Update() {
-		Debug.Log("Velocity " + velocity.y);
 		CalcVelocity();
+
+		if(wallJumpEnabled) {
+			WallSliding();
+		}
 
 		// Coyote time behaviour
 		if(controller.collisions.below) {
@@ -93,6 +105,7 @@ public class PlayerController : MonoBehaviour
 			velocity.y = maxJumpVel;
 		}
 
+		// Move the player
 		controller.Move(velocity * Time.deltaTime);
 
 		if(controller.collisions.above || controller.collisions.below) {
@@ -123,7 +136,17 @@ public class PlayerController : MonoBehaviour
 		}
 	}
 
-    void CalcVelocity() {
+	void WallSliding() {
+		wallSliding = false;
+		if((controller.collisions.left || controller.collisions.right) && !controller.collisions.below && velocity.y < 0) {
+			wallSliding = true;
+			if(velocity.y < -maxWallSlideVelocity) {
+				velocity.y = -maxWallSlideVelocity;
+			}
+		}
+	}
+
+	void CalcVelocity() {
 		float targetVelocity = moveInput.x * (controller.state.isRunning ? runSpeed : walkSpeed);
 
 		velocity.x = Mathf.SmoothDamp(velocity.x, targetVelocity, ref velocitySmoothing, (controller.state.isGrounded ? accTimeGrounded : accTimeAirborne));

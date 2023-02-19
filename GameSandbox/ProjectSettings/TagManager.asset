@@ -12,9 +12,9 @@ TagManager:
   - Player
   - Water
   - UI
-  - Walkable
-  - 
-  - 
+  - Ground
+  - Wall
+  - Slope
   - 
   - 
   - 

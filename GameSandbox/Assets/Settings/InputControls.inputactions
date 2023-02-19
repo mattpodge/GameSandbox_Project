@@ -191,7 +191,7 @@
                 {
                     "name": "",
                     "id": "051044d7-8e45-42dc-b1ea-f14a4bd1daae",
-                    "path": "<Keyboard>/shift",
+                    "path": "<Keyboard>/leftShift",
                     "interactions": "",
                     "processors": "",
                     "groups": "Player Controls",
