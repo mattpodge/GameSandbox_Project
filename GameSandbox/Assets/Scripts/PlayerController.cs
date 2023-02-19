@@ -61,8 +61,21 @@ public class PlayerController : MonoBehaviour
 	[Header("Wall Jump")]
 	[SerializeField]
 	bool wallJumpEnabled = true;
+
+	[SerializeField]
+	float wallStickTime = 0.25f;
+	float wallStickTimeCounter;
+
 	bool wallSliding;
-	float maxWallSlideVelocity = 4f;
+	int wallDirection;
+	[SerializeField]
+	float maxWallSlideVelocity = 3f;
+	[SerializeField]
+	Vector2 wallJumpClimb;
+	[SerializeField]
+	Vector2 wallJumpOff;
+	[SerializeField]
+	Vector2 wallJumpLeap;
 	#endregion
 
 
@@ -123,6 +136,20 @@ public class PlayerController : MonoBehaviour
 
     public void OnJump(InputAction.CallbackContext context) {
         if(context.performed) {
+
+			if(wallSliding) {
+				if(wallDirection == moveInput.x) {
+					velocity.x = -wallDirection * wallJumpClimb.x;
+					velocity.y = wallJumpClimb.y;
+				} else if(moveInput.x == 0) {
+					velocity.x = -wallDirection * wallJumpOff.x;
+					velocity.y = wallJumpOff.y;
+				} else {
+					velocity.x = -wallDirection * wallJumpLeap.x;
+					velocity.y = wallJumpLeap.y;
+				}
+			}
+
 			if(coyoteTimeCounter > 0f) {
 				velocity.y = maxJumpVel;
 			}
@@ -137,11 +164,26 @@ public class PlayerController : MonoBehaviour
 	}
 
 	void WallSliding() {
+		wallDirection = (controller.collisions.left) ? -1 : 1;
 		wallSliding = false;
 		if((controller.collisions.left || controller.collisions.right) && !controller.collisions.below && velocity.y < 0) {
 			wallSliding = true;
 			if(velocity.y < -maxWallSlideVelocity) {
 				velocity.y = -maxWallSlideVelocity;
+			}
+
+			// Give player time to leap when pushing away from the wall
+			if(wallStickTimeCounter > 0) {
+				velocitySmoothing = 0;
+				velocity.x = 0;
+
+				if(moveInput.x != wallDirection && moveInput.x != 0) {
+					wallStickTimeCounter -= Time.deltaTime;
+				} else {
+					wallStickTimeCounter = wallStickTime;
+				}
+			} else {
+				wallStickTimeCounter = wallStickTime;
 			}
 		}
 	}
