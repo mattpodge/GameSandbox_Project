@@ -55,6 +55,15 @@ public class PlayerController : MonoBehaviour
 	[SerializeField]
 	float jumpBuffer = 0.05f;
 	float jumpBufferCounter;
+
+	// Double jumping
+	[SerializeField]
+	bool doubleJump = true;
+	[SerializeField]
+	int availableJumps = 1;
+	[SerializeField]
+	int jumpsCounter;
+
 	#endregion
 
 	#region
@@ -105,6 +114,7 @@ public class PlayerController : MonoBehaviour
 		// Coyote time behaviour
 		if(controller.collisions.below) {
 			coyoteTimeCounter = coyoteTime;
+			jumpsCounter = availableJumps;
 		} else {
 			coyoteTimeCounter -= Time.deltaTime;
 		}
@@ -150,10 +160,17 @@ public class PlayerController : MonoBehaviour
 				}
 			}
 
-			if(coyoteTimeCounter > 0f) {
+			if(coyoteTimeCounter > 0f || jumpsCounter > 0 && doubleJump) {
 				velocity.y = maxJumpVel;
 			}
+
+			if(jumpsCounter > 0) {
+				jumpsCounter -= 1;
+			}
+
 			jumpBufferCounter = jumpBuffer;
+
+
 		}
 		if(context.canceled) {
 			coyoteTimeCounter = 0f;
@@ -161,6 +178,7 @@ public class PlayerController : MonoBehaviour
 				velocity.y = minJumpVel;
 			}
 		}
+
 	}
 
 	void WallSliding() {
