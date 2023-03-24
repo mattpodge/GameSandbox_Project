@@ -1,16 +1,17 @@
 using System;
 using System.Collections;
 using System.Runtime.InteropServices.WindowsRuntime;
+using UnityEditor;
 using UnityEngine;
 
-[RequireComponent (typeof(BoxCollider2D))]
+[RequireComponent (typeof(CapsuleCollider2D))]
 public class CharacterController2D : MonoBehaviour
 {
 
 	#region
 	[Header("Collision Detection")]
 	const float skinWidth = 0.015f;
-	const float raySpacing = 0.25f;
+	const float raySpacing = 0.125f;
 
 	int horzRayCount;
 	int vertRayCount;
@@ -23,13 +24,13 @@ public class CharacterController2D : MonoBehaviour
 	[SerializeField]
 	float maxSlopeAngle = 60.0f;
 
-    new BoxCollider2D collider;
+    new CapsuleCollider2D collider;
     RayCastOrigins raycastOrigins;
 	public CollisionInfo collisions;
 	public CharacterState state;
 
 	void Awake() {
-        collider = GetComponent<BoxCollider2D>();
+        collider = GetComponent<CapsuleCollider2D>();
 	}
 
 	void Start() {
@@ -109,12 +110,30 @@ public class CharacterController2D : MonoBehaviour
         float dirY = Mathf.Sign(movement.y);
         float rayLength = Mathf.Abs(movement.y) + skinWidth;
 
+		// Capsule
+		/*Vector2 pointA = (dirY == -1) ? raycastOrigins.btmLeft : raycastOrigins.topLeft;
+		Vector2 pointB = (dirY == -1) ? raycastOrigins.btmRight : raycastOrigins.topRight;
+		float radius = Vector2.Distance(pointA, pointB) / 2f;
+		Vector3 centrePoint = (pointA + pointB) / 2f;
+		Quaternion centreDir = Quaternion.LookRotation((pointB - pointA).normalized, Vector3.up * dirY);
+		Debug.DrawRay(centrePoint, Vector2.up * dirY * 0.025f, Color.magenta);*/
+
 		for(int i = 0; i < vertRayCount; i++) {
+			// Draw rays in a straight line
             Vector2 rayOrigin = (dirY == -1) ? raycastOrigins.btmLeft : raycastOrigins.topLeft;
             rayOrigin += Vector2.right * (vertRaySpacing * i + movement.x);
 			RaycastHit2D hit = Physics2D.Raycast(rayOrigin, Vector2.up * dirY, rayLength, collisionMask);
-
 			Debug.DrawRay(rayOrigin , Vector2.up * dirY * rayLength, Color.red);
+
+			// Draw rays in a semi circle
+			/*float angle = Mathf.PI * i / vertRayCount;
+			float xPos = Mathf.Sin(angle) * radius;
+			float yPos = Mathf.Cos(angle) * radius;
+			Vector3 pointPos = new Vector3(0, xPos, yPos);
+			pointPos = centreDir * pointPos;
+			RaycastHit2D hit = Physics2D.Raycast(centrePoint + pointPos, Vector2.up * dirY, rayLength, collisionMask);
+			Debug.DrawRay(centrePoint + pointPos, Vector2.up * dirY * rayLength, Color.magenta);*/
+
 
 			if(hit) {
 				movement.y = (hit.distance - skinWidth) * dirY;
@@ -180,22 +199,36 @@ public class CharacterController2D : MonoBehaviour
 		Bounds bounds = collider.bounds;
 		bounds.Expand(skinWidth * -2);
 
-        raycastOrigins.btmLeft = new Vector2(bounds.min.x, bounds.min.y);
-        raycastOrigins.btmRight = new Vector2(bounds.max.x, bounds.min.y);
-        raycastOrigins.topLeft = new Vector2(bounds.min.x, bounds.max.y);
-        raycastOrigins.topRight = new Vector2(bounds.max.x, bounds.max.y);
+		// Box
+		raycastOrigins.btmLeft = new Vector2(bounds.min.x, bounds.min.y);
+		raycastOrigins.btmRight = new Vector2(bounds.max.x, bounds.min.y);
+		raycastOrigins.topLeft = new Vector2(bounds.min.x, bounds.max.y);
+		raycastOrigins.topRight = new Vector2(bounds.max.x, bounds.max.y);
+
+		// Capsule
+		/*float capsuleRadius = bounds.size.x / 2;
+        raycastOrigins.btmLeft = new Vector2(bounds.min.x, bounds.min.y + capsuleRadius);
+        raycastOrigins.btmRight = new Vector2(bounds.max.x, bounds.min.y + capsuleRadius);
+        raycastOrigins.topLeft = new Vector2(bounds.min.x, bounds.max.y - capsuleRadius);
+        raycastOrigins.topRight = new Vector2(bounds.max.x, bounds.max.y - capsuleRadius);*/
     }
 
 	void CalculateRaySpacing() {
 		Bounds bounds = collider.bounds;
 		bounds.Expand(skinWidth * -2);
 
-
+		// Box
 		horzRayCount = Mathf.RoundToInt(bounds.size.y / raySpacing);
 		vertRayCount = Mathf.RoundToInt(bounds.size.x / raySpacing);
-
 		horzRaySpacing = bounds.size.y / (horzRayCount - 1);
 		vertRaySpacing = bounds.size.x / (vertRayCount - 1);
+
+		// Capsule
+		/*float capsuleRadius = bounds.size.x / 2;
+		horzRayCount = Mathf.RoundToInt((bounds.size.y - (capsuleRadius * 2)) / raySpacing);
+		vertRayCount = Mathf.RoundToInt((Mathf.PI * capsuleRadius) / raySpacing);
+		horzRaySpacing = (bounds.size.y - (capsuleRadius * 2)) / (horzRayCount - 1);
+		vertRaySpacing = (Mathf.PI * capsuleRadius) / (vertRayCount - 1);*/
 	}
 
 	struct RayCastOrigins {

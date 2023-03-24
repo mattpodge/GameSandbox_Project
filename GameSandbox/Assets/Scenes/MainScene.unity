@@ -2233,6 +2233,9 @@ MonoBehaviour:
   fallMultiplier: 2.5
   coyoteTime: 0.2
   jumpBuffer: 0.2
+  doubleJump: 0
+  availableJumps: 1
+  jumpsCounter: 0
   wallJumpEnabled: 1
   wallStickTime: 0.25
   maxWallSlideVelocity: 4
