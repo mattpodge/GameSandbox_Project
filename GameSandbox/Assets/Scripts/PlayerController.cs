@@ -160,6 +160,8 @@ public class PlayerController : MonoBehaviour
 				}
 			}
 
+			// 26/03/23 - Figure out how to double jump with coyote time. Doesn't work atm
+
 			if(coyoteTimeCounter > 0f || jumpsCounter > 0 && doubleJump) {
 				velocity.y = maxJumpVel;
 			}
