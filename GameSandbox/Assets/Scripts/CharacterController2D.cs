@@ -122,6 +122,7 @@ public class CharacterController2D : MonoBehaviour
 			// Draw rays in a straight line
             Vector2 rayOrigin = (dirY == -1) ? raycastOrigins.btmLeft : raycastOrigins.topLeft;
             rayOrigin += Vector2.right * (vertRaySpacing * i + movement.x);
+
 			RaycastHit2D hit = Physics2D.Raycast(rayOrigin, Vector2.up * dirY, rayLength, collisionMask);
 			Debug.DrawRay(rayOrigin , Vector2.up * dirY * rayLength, Color.red);
 
@@ -131,8 +132,9 @@ public class CharacterController2D : MonoBehaviour
 			float yPos = Mathf.Cos(angle) * radius;
 			Vector3 pointPos = new Vector3(0, xPos, yPos);
 			pointPos = centreDir * pointPos;
-			RaycastHit2D hit = Physics2D.Raycast(centrePoint + pointPos, Vector2.up * dirY, rayLength, collisionMask);
-			Debug.DrawRay(centrePoint + pointPos, Vector2.up * dirY * rayLength, Color.magenta);*/
+
+			RaycastHit2D hit = Physics2D.Raycast(centrePoint + pointPos, pointPos, rayLength, collisionMask);
+			Debug.DrawRay(centrePoint + pointPos, pointPos * rayLength, Color.magenta);*/
 
 
 			if(hit) {
@@ -206,8 +208,8 @@ public class CharacterController2D : MonoBehaviour
 		raycastOrigins.topRight = new Vector2(bounds.max.x, bounds.max.y);
 
 		// Capsule
-		/*float capsuleRadius = bounds.size.x / 2;
-        raycastOrigins.btmLeft = new Vector2(bounds.min.x, bounds.min.y + capsuleRadius);
+		float capsuleRadius = bounds.size.x / 2;
+        /*raycastOrigins.btmLeft = new Vector2(bounds.min.x, bounds.min.y + capsuleRadius);
         raycastOrigins.btmRight = new Vector2(bounds.max.x, bounds.min.y + capsuleRadius);
         raycastOrigins.topLeft = new Vector2(bounds.min.x, bounds.max.y - capsuleRadius);
         raycastOrigins.topRight = new Vector2(bounds.max.x, bounds.max.y - capsuleRadius);*/
