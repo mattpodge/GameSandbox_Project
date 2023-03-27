@@ -127,7 +127,7 @@ public class CharacterController2D : MonoBehaviour
 			Debug.DrawRay(rayOrigin , Vector2.up * dirY * rayLength, Color.red);
 
 			// Draw rays in a semi circle
-			/*float angle = Mathf.PI * i / vertRayCount;
+			/*float angle = Mathf.PI * (i + 1) / (vertRayCount + 1);
 			float xPos = Mathf.Sin(angle) * radius;
 			float yPos = Mathf.Cos(angle) * radius;
 			Vector3 pointPos = new Vector3(0, xPos, yPos);
@@ -208,8 +208,8 @@ public class CharacterController2D : MonoBehaviour
 		raycastOrigins.topRight = new Vector2(bounds.max.x, bounds.max.y);
 
 		// Capsule
-		float capsuleRadius = bounds.size.x / 2;
-        /*raycastOrigins.btmLeft = new Vector2(bounds.min.x, bounds.min.y + capsuleRadius);
+		/*float capsuleRadius = bounds.size.x / 2;
+        raycastOrigins.btmLeft = new Vector2(bounds.min.x, bounds.min.y + capsuleRadius);
         raycastOrigins.btmRight = new Vector2(bounds.max.x, bounds.min.y + capsuleRadius);
         raycastOrigins.topLeft = new Vector2(bounds.min.x, bounds.max.y - capsuleRadius);
         raycastOrigins.topRight = new Vector2(bounds.max.x, bounds.max.y - capsuleRadius);*/

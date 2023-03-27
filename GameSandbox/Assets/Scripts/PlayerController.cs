@@ -114,9 +114,12 @@ public class PlayerController : MonoBehaviour
 		// Coyote time behaviour
 		if(controller.collisions.below) {
 			coyoteTimeCounter = coyoteTime;
-			jumpsCounter = availableJumps;
 		} else {
 			coyoteTimeCounter -= Time.deltaTime;
+		}
+
+		if(coyoteTimeCounter > 0) {
+			jumpsCounter = availableJumps;
 		}
 
 		// Jump buffer behaviour
@@ -159,8 +162,6 @@ public class PlayerController : MonoBehaviour
 					velocity.y = wallJumpLeap.y;
 				}
 			}
-
-			// 26/03/23 - Figure out how to double jump with coyote time. Doesn't work atm
 
 			if(coyoteTimeCounter > 0f || jumpsCounter > 0 && doubleJump) {
 				velocity.y = maxJumpVel;
